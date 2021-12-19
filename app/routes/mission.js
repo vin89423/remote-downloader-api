@@ -8,7 +8,8 @@ const config = require('../../config');
 const downloader = require('../services/downloader');
 const Mission = require('../models/mission');
 
-const requireLoggedInMiddleware = async (req, res, next) => {
+// Ensure user is logged in
+router.use(async (req, res, next) => {
   if (req.session.user) req.user = req.session.user;
   if (! req.user) return next(createHttpError(403, 'Forbidden'));
 
@@ -16,10 +17,10 @@ const requireLoggedInMiddleware = async (req, res, next) => {
   await downloader.ensureDownloadFolder(req.downloadPath);
 
   next();
-};
+});
 
 // Get download list
-router.get('/', requireLoggedInMiddleware, async (req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
     let status = req.query.status || null;
     const missions = await Mission.getMissions(req.user.id, status);
@@ -31,7 +32,7 @@ router.get('/', requireLoggedInMiddleware, async (req, res, next) => {
 });
 
 // Add new mission
-router.post('/', requireLoggedInMiddleware, async (req, res, next) => {
+router.post('/', async (req, res, next) => {
   try {
     if (!req.body.url) {
       throw createHttpError(400, 'Bad Request');
@@ -55,7 +56,7 @@ router.post('/', requireLoggedInMiddleware, async (req, res, next) => {
 });
 
 // remove all downloaded files
-router.delete('/', requireLoggedInMiddleware, async (req, res, next) => {
+router.delete('/', async (req, res, next) => {
   try {
     const missions = await Mission.getMissions(req.user.id);
     await Promise.all(missions.map(async mission => {
@@ -70,7 +71,7 @@ router.delete('/', requireLoggedInMiddleware, async (req, res, next) => {
 });
 
 // remove specify downloaded file
-router.delete('/:fileId', requireLoggedInMiddleware, async (req, res, next) => {
+router.delete('/:fileId', async (req, res, next) => {
   try {
     if (! req.params.fileId) {
       throw createHttpError(400, 'Bad Request');
@@ -90,7 +91,7 @@ router.delete('/:fileId', requireLoggedInMiddleware, async (req, res, next) => {
 });
 
 // Get downloaded file
-router.get('/download/:fileId', requireLoggedInMiddleware, async (req, res, next) => {
+router.get('/download/:fileId', async (req, res, next) => {
   try {
     if (!req.params.fileId) {
       throw createHttpError(400, 'Bad Request');
@@ -109,7 +110,7 @@ router.get('/download/:fileId', requireLoggedInMiddleware, async (req, res, next
 });
 
 // Get downloaded files packed
-router.get('/download-all', requireLoggedInMiddleware, async (req, res, next) => {
+router.get('/download-all', async (req, res, next) => {
   try {
     const missions = await Mission.getMissions(req.user.id);
     if (!missions) {
