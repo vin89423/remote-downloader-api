@@ -21,7 +21,8 @@ const requireLoggedInMiddleware = async (req, res, next) => {
 // Get download list
 router.get('/', requireLoggedInMiddleware, async (req, res, next) => {
   try {
-    const missions = await Mission.getMissions(req.user.id);
+    let status = req.query.status || null;
+    const missions = await Mission.getMissions(req.user.id, status);
     const result = missions.map(mission => ({...mission}));
     return res.status(200).json({cnt: result.length, list: result});
   } catch (error) {
