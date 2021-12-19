@@ -28,9 +28,9 @@ app.use(session({
 }));
 
 // express parse body
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.raw());
-app.use(express.urlencoded({ extended: true }));
 
 // route
 app.use(require('./routes'));

@@ -4,7 +4,6 @@ const fs = require('fs');
 const express = require('express');
 const router = express.Router();
 const createHttpError = require('http-errors');
-const archiver = require('archiver');
 const config = require('../../config');
 const downloader = require('../services/downloader');
 const Mission = require('../models/mission');
@@ -72,7 +71,7 @@ router.delete('/', requireLoggedInMiddleware, async (req, res, next) => {
 // remove specify downloaded file
 router.delete('/:fileId', requireLoggedInMiddleware, async (req, res, next) => {
   try {
-    if (req.params.fileId) {
+    if (! req.params.fileId) {
       throw createHttpError(400, 'Bad Request');
     }
 
@@ -92,7 +91,7 @@ router.delete('/:fileId', requireLoggedInMiddleware, async (req, res, next) => {
 // Get downloaded file
 router.get('/download/:fileId', requireLoggedInMiddleware, async (req, res, next) => {
   try {
-    if (req.params.fileId) {
+    if (!req.params.fileId) {
       throw createHttpError(400, 'Bad Request');
     }
     const mission = await Mission.getMission(req.params.fileId, req.user.id);
@@ -111,26 +110,28 @@ router.get('/download/:fileId', requireLoggedInMiddleware, async (req, res, next
 // Get downloaded files packed
 router.get('/download-all', requireLoggedInMiddleware, async (req, res, next) => {
   try {
-    const zipFile = `${req.downloadPath}${(new Date()).getTime()}.zip`
-    const output = fs.createWriteStream(zipFile);
-    const archive = archiver('zip');
-    output.on('close', () => {
-        console.log(archive.pointer() + ' total bytes');
-        console.log('archiver has been finalized and the output file descriptor has closed.');
-    });
-    archive.on('error', (err) => {
-        throw err;
-    });
-    archive.pipe(output);
-
     const missions = await Mission.getMissions(req.user.id);
+    if (!missions) {
+      throw createHttpError(404, 'Page not found');
+    }
+
+    res.setHeader('Content-type', 'application/octet-stream')
+      .setHeader('Content-disposition', `attachment; filename=pack-${(new Date()).getTime()}.zip`);
+
+    const archiver = require('archiver');
+    const archive = archiver('zip');
+
+    archive.on('error', (err) => {
+      throw err;
+    });
+    archive.pipe(res);
+
     await Promise.all(missions.map(async mission => {
       const filename = `${req.downloadPath}${mission.fileId}.file`;
       archive.append(fs.createReadStream(filename), { name: mission.filename });
     }));
 
     archive.finalize();
-    return output.pipe(res);
   } catch (error) {
     next(error);
   }

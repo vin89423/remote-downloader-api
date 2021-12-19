@@ -9,7 +9,7 @@ router.use(helper.prepareLocalsMiddleware);
 
 router.use('/auth', require('./auth'));
 
-router.use('*', require('./download'));
+router.use('/mission', require('./mission'));
 
 router.all('*', (req, res, next) => next(createHttpError(404, 'Page Not Found')));
 
