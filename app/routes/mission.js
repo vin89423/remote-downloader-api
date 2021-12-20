@@ -38,12 +38,10 @@ router.get('/', async (req, res, next) => {
 // Add new mission
 router.post('/', async (req, res, next) => {
   try {
-    if (!req.body.url) {
-      throw createHttpError(400, 'Bad Request');
-    }
+    if (!req.body.url) throw createHttpError(400, 'Bad Request');
 
     const { url, filename, contentType } = await downloader.plugInParser(req);
-    const mission = await Mission.create(req.user.id, url, contentType, filename);
+    const mission = await Mission.create(req.user.id, req.body.url, url, contentType, filename);
 
     // start download mission in background
     downloader.startDownload(mission, req.downloadPath);
@@ -78,9 +76,7 @@ router.delete('/', async (req, res, next) => {
 // remove specify downloaded file
 router.delete('/:fileId', async (req, res, next) => {
   try {
-    if (! req.params.fileId) {
-      throw createHttpError(400, 'Bad Request');
-    }
+    if (! req.params.fileId) throw createHttpError(400, 'Bad Request');
 
     const mission = await Mission.getMission(req.params.fileId, req.user.id);
     if (mission) {
@@ -99,13 +95,11 @@ router.delete('/:fileId', async (req, res, next) => {
 // Get downloaded file
 router.get('/download/:fileId', async (req, res, next) => {
   try {
-    if (!req.params.fileId) {
-      throw createHttpError(400, 'Bad Request');
-    }
+    if (!req.params.fileId) throw createHttpError(400, 'Bad Request');
+
     const mission = await Mission.getMission(req.params.fileId, req.user.id);
-    if (! mission) {
-      throw createHttpError(404, 'Page not found');
-    }
+    if (! mission) throw createHttpError(404, 'Page Not Found');
+
     res.setHeader('Content-type', mission.type)
       .setHeader('Content-disposition', `attachment; filename=${mission.filename}`);
     var filestream = fs.createReadStream(`${req.downloadPath}${mission.fileId}.file`);
@@ -119,9 +113,7 @@ router.get('/download/:fileId', async (req, res, next) => {
 router.get('/download-all', async (req, res, next) => {
   try {
     const missions = await Mission.getMissions(req.user.id);
-    if (!missions) {
-      throw createHttpError(404, 'Page not found');
-    }
+    if (!missions) throw createHttpError(404, 'No Mission Found');
 
     res.setHeader('Content-type', 'application/octet-stream')
       .setHeader('Content-disposition', `attachment; filename=pack-${(new Date()).getTime()}.zip`);

@@ -55,6 +55,8 @@ module.exports = {
         'user-agent': userAgents[Math.floor(Math.random() * userAgents.length)]
       }
     }).then((response) => {
+      console.log(`[${mission.fileId}] Download started`);
+
       let filesize = parseInt(response.headers.get('content-length') || 0);
       mission.updateFilesize(filesize);
 
@@ -63,18 +65,18 @@ module.exports = {
         downloaded += chunk.length;
         if (writeProgress) {
           mission.updateProgress(downloaded);
-          console.log(`${mission.url} downloading ${downloaded}/${filesize}`);
+          console.log(`[${mission.fileId}] Downloading ${downloaded}/${filesize} (${parseInt((downloaded/filesize) * 100)}%)`);
           writeProgress = false;
           setTimeout(() => { writeProgress = true }, 3000);
         }
       })
       response.body.on('end', () => {
         mission.complete(filesize);
-        console.log(`${mission.url} downlaod completed`);
+        console.log(`[${mission.fileId}] Download completed`);
       });
       response.body.on('error', (err) => {
-        mission.updateStatus('error');
-        console.error(err);
+        mission.error(err.message);
+        console.log(`[${mission.fileId}] Error occurred, ${err.message}`);
       });
     });
   }

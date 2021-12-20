@@ -29,7 +29,12 @@ class Mission extends Model {
         status: {
           type: 'string',
           required: true,
-          enum: ['downloading', 'cancel', 'error', 'finished']
+          enum: ['downloading', 'error', 'finished']
+        },
+        oriUrl: {
+          type: 'string',
+          required: true,
+          maxLength: 1024
         },
         url: {
           type: 'string',
@@ -53,6 +58,10 @@ class Mission extends Model {
         progress: {
           type: 'integer',
           required: true
+        },
+        message: {
+          type: 'string',
+          maxLength: 500
         }
       }
     };
@@ -60,16 +69,18 @@ class Mission extends Model {
 
   /**
    * @param {String} userId
+   * @param {String} oriUrl
    * @param {String} url
    * @param {String} type
    * @param {String} filename
    * @returns {String}
    */
-  static async create(userId, url, type, filename) {
+  static async create(userId, oriUrl, url, type, filename) {
     const fileId = `${userId}-${String(Math.random()).substring(2, 8)}-${(new Date()).getTime()}`;
     return await this.query().insert({
       userId,
       fileId,
+      oriUrl,
       url,
       status: 'downloading',
       type,
@@ -85,7 +96,7 @@ class Mission extends Model {
    */
   static async getMissions(userId, filter={}) {
     let query = this.query()
-      .select('fileId', 'url', 'type', 'filename', 'filesize', 'progress', 'status');
+      .select('fileId', 'url', 'type', 'filename', 'filesize', 'progress', 'status', 'message');
     if (filter.status) query.where('status', filter.status);
     if (filter.filename) query.where('filename', 'like', `%${filter.filename}%`);
     return await query.where({userId});
@@ -109,13 +120,6 @@ class Mission extends Model {
   }
 
   /**
-   * @param {String} status
-   */
-  async updateStatus(status) {
-    return await Mission.query().patch({status}).findOne({fileId: this.fileId});
-  }
-
-  /**
    * @param {Integer} progress
    */
   async updateProgress(progress) {
@@ -129,6 +133,16 @@ class Mission extends Model {
     return await Mission.query().patch({
       status: 'finished',
       progress: filesize,
+    }).findOne({fileId: this.fileId});
+  }
+
+  /**
+   * @param {String} message
+   */
+  async error(message) {
+    return await Mission.query().patch({
+      status: 'error',
+      message,
     }).findOne({fileId: this.fileId});
   }
 
