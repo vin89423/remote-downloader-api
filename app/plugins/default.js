@@ -11,20 +11,29 @@ module.exports = async (req) => {
   const controller = new AbortController();
   const timeout = setTimeout(() => { controller.abort() }, 5000);
   try {
-    const response = await fetch(req.body.url, {
-      method: 'HEAD',
-      signal: controller.signal,
-      headers: {
-        'User-Agent': userAgents[Math.floor(Math.random() * userAgents.length)]
-      }
-    });
-    const contentType = response.headers.get('content-type');
-    if (!contentType) {
-      throw createHttpError(404, "Cannot find remote file.");
-    }
+    let response = null,
+      tryUrl = req.body.url;
+
+    do {
+      response = await fetch(tryUrl, {
+        method: 'HEAD',
+        signal: controller.signal,
+        headers: {
+          'User-Agent': userAgents[Math.floor(Math.random() * userAgents.length)]
+        }
+      });
+      tryUrl = response.url;
+    } while(response.redirected);
+
+    if (response === null) throw createHttpError(404, "Cannot find remote file.");
+
+    let contentType = response.headers.get('content-type');
+    if (!contentType) throw createHttpError(404, "Cannot find remote file.");
+    contentType = String(contentType.split(';')[0]).trim();
+
     return {
-      url: req.body.url,
-      filename: req.body.filename || path.basename(req.body.url),
+      url: response.url,
+      filename: req.body.filename || path.basename(response.url),
       contentType,
       contentLength: parseInt(response.headers.get('content-length') || 0)
     };

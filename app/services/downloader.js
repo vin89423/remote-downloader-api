@@ -1,9 +1,7 @@
 'use strict';
 
 const fs = require('fs');
-const http = require('http');
-const https = require('https');
-const { urlToHttpOptions } = require('url');
+const fetch = require('node-fetch');
 const config = require('../../config');
 
 const userAgents = config.userAgents;
@@ -41,20 +39,17 @@ module.exports = {
    * @param {String} downloadFolder
    */
   startDownload: async (mission, downloadFolder) => {
-    const dlUrlProp = urlToHttpOptions(new URL(mission.url));
-    const httpx = dlUrlProp.protocol === 'https:' ? https : http;
     const file = fs.createWriteStream(`${downloadFolder}${mission.fileId}.file`);
     let downloaded = 0;
     let writeProgress = true;
 
-    httpx.get({
-      ...dlUrlProp,
+    fetch(mission.url, {
       headers: {
         'User-Agent': userAgents[Math.floor(Math.random() * userAgents.length)]
       }
-    }, (response) => {
-      response.pipe(file);
-      response.on('data', (chunk) => {
+    }).then((response) => {
+      response.body.pipe(file);
+      response.body.on('data', (chunk) => {
         downloaded += chunk.length;
         if (writeProgress) {
           mission.updateProgress(downloaded);
@@ -63,11 +58,11 @@ module.exports = {
           setTimeout(() => { writeProgress = true }, 3000);
         }
       })
-      response.on('end', () => {
+      response.body.on('end', () => {
         mission.complete();
         console.log(`${mission.url} downlaod completed`);
       });
-      response.on('error', (err) => {
+      response.body.on('error', (err) => {
         mission.updateStatus('error');
         console.error(err);
       });

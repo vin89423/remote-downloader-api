@@ -61,7 +61,8 @@ router.delete('/', async (req, res, next) => {
     const missions = await Mission.getMissions(req.user.id);
     await Promise.all(missions.map(async mission => {
       const filename = `${req.downloadPath}${mission.fileId}.file`;
-      fs.unlink(filename, (err) => { if (err) console.error(err) });
+      if (fs.existsSync(filename))
+        fs.unlink(filename, (err) => { if (err) console.error(err) });
       await mission.remove();
     }));
     return res.sendStatus(200);
@@ -80,7 +81,8 @@ router.delete('/:fileId', async (req, res, next) => {
     const mission = await Mission.getMission(req.params.fileId, req.user.id);
     if (mission) {
       const filename = `${req.downloadPath}${mission.fileId}.file`;
-      fs.unlink(filename, (err) => { if (err) console.error(err) });
+      if (fs.existsSync(filename))
+        fs.unlink(filename, (err) => { if (err) console.error(err) });
       await mission.remove();
     }
 
