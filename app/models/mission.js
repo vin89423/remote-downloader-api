@@ -82,12 +82,13 @@ class Mission extends Model {
 
   /**
    * @param {String} userId
-   * @param {String} [status=null]
+   * @param {Object} [filter={}]
    */
-  static async getMissions(userId, status=null) {
+  static async getMissions(userId, filter={}) {
     let query = this.query()
       .select('fileId', 'url', 'type', 'filename', 'filesize', 'progress', 'status');
-    if (status !== null) query.where({status});
+    if (filter.status) query.where('status', filter.status);
+    if (filter.filename) query.where('filename', 'like', `%${filter.filename}%`);
     return await query.where({userId});
   }
 
