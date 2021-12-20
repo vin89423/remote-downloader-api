@@ -63,10 +63,9 @@ class Mission extends Model {
    * @param {String} url
    * @param {String} type
    * @param {String} filename
-   * @param {Integer} filesize
    * @returns {String}
    */
-  static async create(userId, url, type, filename, filesize) {
+  static async create(userId, url, type, filename) {
     const fileId = `${userId}-${String(Math.random()).substring(2, 8)}-${(new Date()).getTime()}`;
     return await this.query().insert({
       userId,
@@ -75,7 +74,7 @@ class Mission extends Model {
       status: 'downloading',
       type,
       filename,
-      filesize,
+      filesize: 0,
       progress: 0
     });
   }
@@ -103,6 +102,13 @@ class Mission extends Model {
   }
 
   /**
+   * @param {Number} filesize
+   */
+  async updateFilesize(filesize) {
+    return await Mission.query().patch({filesize}).findOne({fileId: this.fileId});
+  }
+
+  /**
    * @param {String} status
    */
   async updateStatus(status) {
@@ -117,12 +123,12 @@ class Mission extends Model {
   }
 
   /**
-   * @param {Integer} progress
+   * @param {Integer} filesize
    */
-  async complete() {
+  async complete(filesize) {
     return await Mission.query().patch({
       status: 'finished',
-      progress: this.filesize,
+      progress: filesize,
     }).findOne({fileId: this.fileId});
   }
 

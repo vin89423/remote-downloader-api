@@ -38,28 +38,38 @@ module.exports = {
    * @param {Mission} mission
    * @param {String} downloadFolder
    */
-  startDownload: async (mission, downloadFolder) => {
+  startDownload: (mission, downloadFolder) => {
     const file = fs.createWriteStream(`${downloadFolder}${mission.fileId}.file`);
-    let downloaded = 0;
-    let writeProgress = true;
+    let urlData = new URL(mission.url),
+      downloaded = 0,
+      writeProgress = true;
 
     fetch(mission.url, {
       headers: {
-        'User-Agent': userAgents[Math.floor(Math.random() * userAgents.length)]
+        'accept': '*/*',
+        'accept-encoding': 'gzip, deflate, br',
+        'accept-language': 'en',
+        'cache-control': 'no-cache',
+        'origin': urlData.origin,
+        'referer': urlData.origin,
+        'user-agent': userAgents[Math.floor(Math.random() * userAgents.length)]
       }
     }).then((response) => {
+      let filesize = parseInt(response.headers.get('content-length') || 0);
+      mission.updateFilesize(filesize);
+
       response.body.pipe(file);
       response.body.on('data', (chunk) => {
         downloaded += chunk.length;
         if (writeProgress) {
           mission.updateProgress(downloaded);
-          console.log(`${mission.url} downloading ${downloaded}/${mission.filesize}`);
+          console.log(`${mission.url} downloading ${downloaded}/${filesize}`);
           writeProgress = false;
           setTimeout(() => { writeProgress = true }, 3000);
         }
       })
       response.body.on('end', () => {
-        mission.complete();
+        mission.complete(filesize);
         console.log(`${mission.url} downlaod completed`);
       });
       response.body.on('error', (err) => {

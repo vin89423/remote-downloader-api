@@ -34,8 +34,7 @@ module.exports = async (req) => {
     return {
       url: response.url,
       filename: req.body.filename || path.basename(response.url),
-      contentType,
-      contentLength: parseInt(response.headers.get('content-length') || 0)
+      contentType
     };
   } catch (err) {
     throw createHttpError(500, 'Connect url timeout');

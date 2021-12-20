@@ -23,7 +23,7 @@ router.use(async (req, res, next) => {
 router.get('/', async (req, res, next) => {
   try {
     let status = req.query.status || null,
-      filename = req.query.filename || null,
+      filename = req.query.filename || null;
     const missions = await Mission.getMissions(req.user.id, {
       status,
       filename
@@ -42,8 +42,8 @@ router.post('/', async (req, res, next) => {
       throw createHttpError(400, 'Bad Request');
     }
 
-    const { url, filename, contentType, contentLength } = await downloader.plugInParser(req);
-    const mission = await Mission.create(req.user.id, url, contentType, filename, contentLength);
+    const { url, filename, contentType } = await downloader.plugInParser(req);
+    const mission = await Mission.create(req.user.id, url, contentType, filename);
 
     // start download mission in background
     downloader.startDownload(mission, req.downloadPath);
