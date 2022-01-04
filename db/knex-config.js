@@ -3,18 +3,9 @@
 const dbPath = 'db/';
 
 module.exports = {
-  general: {
-    client: 'sqlite3',
-    connection: {
-      filename: `${dbPath}database.db3`,
-    },
-    useNullAsDefault: true
+  client: 'sqlite3',
+  connection: {
+    filename: `${dbPath}database.db3`,
   },
-  session: {
-    client: 'sqlite3',
-    connection: {
-      filename: `${dbPath}session.db3`,
-    },
-    useNullAsDefault: true
-  }
+  useNullAsDefault: true
 };

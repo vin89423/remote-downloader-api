@@ -3,5 +3,5 @@
 package-lock.json
 node_modules/
 downloads/**
-db/session.db3
+db/database.db3
 .env
