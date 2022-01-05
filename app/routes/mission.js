@@ -100,8 +100,8 @@ router.get('/download/:fileId', async (req, res, next) => {
     const mission = await Mission.getMission(req.params.fileId, req.user.id);
     if (! mission) throw createHttpError(404, 'Page Not Found');
 
-    res.setHeader('Content-type', mission.type)
-      .setHeader('Content-disposition', `attachment; filename=${mission.filename}`);
+    res.setHeader('Content-type', mission.type);
+    res.setHeader('Content-disposition', `attachment; filename=${mission.filename}`);
     var filestream = fs.createReadStream(`${req.downloadPath}${mission.fileId}.file`);
     return filestream.pipe(res);
   } catch (error) {
@@ -115,8 +115,8 @@ router.get('/download-all', async (req, res, next) => {
     const missions = await Mission.getMissions(req.user.id);
     if (!missions) throw createHttpError(404, 'No Mission Found');
 
-    res.setHeader('Content-type', 'application/octet-stream')
-      .setHeader('Content-disposition', `attachment; filename=pack-${(new Date()).getTime()}.zip`);
+    res.setHeader('Content-type', 'application/octet-stream');
+    res.setHeader('Content-disposition', `attachment; filename=pack-${(new Date()).getTime()}.zip`);
 
     const archiver = require('archiver');
     const archive = archiver('zip');
